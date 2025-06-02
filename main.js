@@ -1,8 +1,9 @@
 // server.js
 
 const express = require('express');
-const ytdl = require('ytdl-core');
 const path = require('path');
+const { exec } = require('child_process');
+const fs = require('fs');
 
 const app = express();
 const PORT = 10000;
@@ -14,30 +15,35 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.post('/download', async (req, res) => {
+app.post('/download', (req, res) => {
   const url = req.body.url;
   const format = req.body.format;
 
-  if (!ytdl.validateURL(url)) {
+  if (!url || (!url.includes('youtube.com') && !url.includes('youtu.be'))) {
     return res.status(400).send('Invalid YouTube URL');
   }
 
-  try {
-    const info = await ytdl.getInfo(url);
-    const title = info.videoDetails.title.replace(/[^a-zA-Z0-9]/g, '_');
+  const timestamp = Date.now();
+  const filename = `download_${timestamp}.${format === 'audio' ? 'mp3' : 'mp4'}`;
+  const filepath = path.join(__dirname, 'downloads', filename);
 
-    if (format === 'audio') {
-      res.header('Content-Disposition', `attachment; filename="${title}.mp3"`);
-      ytdl(url, { filter: 'audioonly' }).pipe(res);
-    } else {
-      res.header('Content-Disposition', `attachment; filename="${title}.mp4"`);
-      ytdl(url, { quality: 'highestvideo' }).pipe(res);
+  const command = format === 'audio'
+    ? `yt-dlp -x --audio-format mp3 -o "${filepath}" "${url}"`
+    : `yt-dlp -f mp4 -o "${filepath}" "${url}"`;
+
+  exec(command, (error, stdout, stderr) => {
+    if (error) {
+      console.error(stderr);
+      return res.status(500).send('Download failed.');
     }
-  } catch (err) {
-    res.status(500).send(`Download failed: ${err.message}`);
-  }
+
+    res.download(filepath, filename, (err) => {
+      if (err) console.error('Download error:', err);
+      fs.unlink(filepath, () => {}); // Clean up after download
+    });
+  });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
