@@ -4,7 +4,7 @@ const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const API_KEY = 'priyansh-here'; // Set your API key
+const API_KEY = 'prem-babu'; // Set your API key
 
 app.use(cors());
 app.use(express.static('public'));
