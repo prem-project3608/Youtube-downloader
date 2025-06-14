@@ -1,14 +1,19 @@
 {
-  "name": "youtube-api-playground",
+  "name": "youtube-downloader-api",
   "version": "1.0.0",
-  "description": "YouTube Video/Audio Downloader API Playground",
-  "main": "server.js",
+  "description": "YouTube video/audio downloader API with frontend and YouTube Data API support.",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node index.js"
   },
+  "keywords": ["youtube", "downloader", "audio", "video", "api"],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "ytdl-core": "^4.11.1"
+    "googleapis": "^128.0.0",
+    "ytdl-core": "^4.11.4"
   }
 }
