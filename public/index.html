@@ -1,49 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Prem's API Playground</title>
+  <meta charset="UTF-8">
+  <title>YouTube Downloader</title>
   <style>
-    body { font-family: sans-serif; background: #1e1e2f; color: white; text-align: center; padding: 2rem; }
-    input, select { padding: 0.5rem; margin: 0.5rem; width: 250px; }
-    button { padding: 0.5rem 1rem; margin-top: 1rem; cursor: pointer; }
-    .result { margin-top: 1rem; }
+    body { font-family: sans-serif; padding: 40px; background: #f4f4f4; }
+    input, select, button { padding: 8px; margin: 5px; width: 300px; }
+    .result { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>Prem's API Playground</h1>
-  <h2>YouTube Download API</h2>
-  <input type="text" id="videoId" placeholder="YouTube Video ID"/><br/>
+  <h2>YouTube Downloader</h2>
+  <input id="query" placeholder="Enter song name or video ID" />
   <select id="type">
     <option value="video">Video</option>
     <option value="audio">Audio</option>
-  </select><br/>
-  <input type="text" id="apiKey" value="prem-babu"/><br/>
-  <button onclick="getDownloadUrl()">Get Download URL</button>
-  <div class="result" id="result"></div>
+  </select><br>
+  <input id="apikey" placeholder="Enter API Key" value="prem-babu" />
+  <button onclick="handleSearch()">Download</button>
+
+  <div id="result" class="result"></div>
 
   <script>
-    function getDownloadUrl() {
-      const id = document.getElementById('videoId').value.trim();
+    async function handleSearch() {
+      const query = document.getElementById('query').value.trim();
       const type = document.getElementById('type').value;
-      const apiKey = document.getElementById('apiKey').value.trim();
+      const apikey = document.getElementById('apikey').value;
 
-      const apiUrl = \`/youtube?id=\${id}&type=\${type}&apikey=\${apiKey}\`;
+      const isID = /^[\w-]{11}$/.test(query); // Check if input is video ID
 
-      fetch(apiUrl)
-        .then(res => res.json())
-        .then(data => {
-          if (data.downloadUrl) {
-            document.getElementById('result').innerHTML = 
-              \`<p><strong>\${data.title}</strong></p><a href="\${data.downloadUrl}" target="_blank">Download Link</a>\`;
-          } else {
-            document.getElementById('result').textContent = data.error || 'Unknown error';
-          }
-        })
-        .catch(err => {
-          document.getElementById('result').textContent = 'Error fetching data';
-        });
+      let videoId = query;
+
+      if (!isID) {
+        const searchRes = await fetch(`/search?q=${encodeURIComponent(query)}&apikey=${apikey}`);
+        const data = await searchRes.json();
+        if (!data.videoId) return alert('Video not found');
+        videoId = data.videoId;
+      }
+
+      const res = await fetch(`/youtube?id=${videoId}&type=${type}&apikey=${apikey}`);
+      const json = await res.json();
+
+      if (json.downloadUrl) {
+        document.getElementById('result').innerHTML = `
+          <h3>${json.title}</h3>
+          <img src="${json.thumbnail}" width="200"/><br/>
+          <a href="${json.downloadUrl}" target="_blank" download>Click to Download ${json.type}</a>
+        `;
+      } else {
+        document.getElementById('result').innerText = 'Error: ' + json.error;
+      }
     }
   </script>
 </body>
